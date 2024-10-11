@@ -154,24 +154,26 @@ colrVolume = {		# volume button definitions
 
 #########################################################################
 #									#
-#	get initial Configuration from mmc4w.ini			#
+#	get initial Configuration from KitchenPlayer.ini		#
 #									#
 #########################################################################
 path_to_dat = Path(__file__).parent
 mmc4wIni = path_to_dat / "mmc4w.ini"
+iniFilename = path_to_dat / (programName +".ini")
 workDir = os.path.expanduser("~")
+print ("mmc4wIni is {}, iniFilename={}, workDir={}.".format(mmc4wIni,iniFilename,workDir) )
 
 # confparse is for general use for normal text strings.
 # for example, confparse.get('serverstats','playlists') returns the string:
 #	Raffaellas,radio-Amore_SoloMusica,Albums,Oldies,Opera,default,
 confparse = ConfigParser()	# current value of mmc4w.ini file as a dict
-confparse.read(mmc4wIni)
+confparse.read(iniFilename)
 
 # cp is for use where lists are involved.
 # for example cp.getlist('serverstats','playlists') returns the list:
 #	['Raffaellas', 'radio-Amore_SoloMusica', 'Albums', 'Oldies', 'Opera', 'default', '']
 cp = ConfigParser(converters={'list': lambda x: [i.strip() for i in x.split(',')]})
-cp.read(mmc4wIni)
+cp.read(iniFilename)
 
 if confparse.get('basic','installation') == "":
     confparse.set('basic','installation',str(path_to_dat))
@@ -183,12 +185,14 @@ if confparse.get('basic','sysplatform') == "":
 #
 logLevel = confparse.get('program','loglevel').upper()
 logtoggle = confparse.get('program','logging').upper()
+logFilename = path_to_dat / (programName +".log")
+
 if logtoggle == 'OFF':
     logLevel = 'WARNING'
 
 if logLevel == "INFO":
-    if os.path.isfile(path_to_dat / "mmc4w.log"):
-        os.remove(path_to_dat / "mmc4w.log")
+    if os.path.isfile(path_to_dat / logFilename):
+        os.remove(path_to_dat / logFilename)
 
 if logLevel == 'DEBUG':
     logging.basicConfig(
@@ -199,14 +203,14 @@ if logLevel == 'DEBUG':
     )
 elif logLevel == 'INFO':
     logging.basicConfig(
-        filename=path_to_dat / "mmc4w.log",
+        filename=path_to_dat / logFilename,
         format="%(asctime)s - %(message)s",
         datefmt="%a, %d %b %Y %H:%M:%S",
         level=logging.INFO,
     )
 else: 		# anything else defaults to 'WARNING':
     logging.basicConfig(
-        filename=path_to_dat / "mmc4w.log",
+        filename=path_to_dat / logFilename,
         format="%(asctime)s - %(message)s",
         datefmt="%a, %d %b %Y %H:%M:%S",
         level=logging.WARNING,
@@ -236,9 +240,9 @@ if serverlist == "":
     proceed = messagebox.askokcancel("Edit Config File","OK closes the app and opens mmc4w.ini for editing.")
     if proceed == True:
         if sys.platform == "win32":
-            os.startfile(mmc4wIni)
+            os.startfile(iniFilename)
         else:
-            subprocess.run(["xdg-open", mmc4wIni])
+            subprocess.run(["xdg-open", iniFilename])
         sys.exit()
 
 if serverip == '':
@@ -268,7 +272,7 @@ if version != confparse.get('program','version'):
     confparse.set('program','version',version )
 
 # update all the .ini configuration parameters
-with open(mmc4wIni, 'w') as SLcnf:
+with open(iniFilename, 'w') as SLcnf:
      confparse.write(SLcnf)
 
 
@@ -437,7 +441,7 @@ def exit():
 
 def updateIni(section, key, value):
     confparse.set(section,key,value)
-    with open(mmc4wIni, 'w') as SLcnf:
+    with open(iniFilename, 'w') as SLcnf:
         confparse.write(SLcnf)
     logger.debug("ini file  section [{}] updated with {} = {}".format(section, key, value) )
 
@@ -560,7 +564,7 @@ def remove():
     songID = currstat['songid']
     filename = currsong['file']
     # confirm it is to be removed  
-    if proceed = messagebox.askokcancel("R U sure ?","REMOVE {} ?".format(currsong['title']) ):
+    if proceed == messagebox.askokcancel("R U sure ?","REMOVE {} ?".format(currsong['title']) ):
         # remove from the playlist
         client.deleteid(songID)
         client.save(lastpl)	#,replace)	# replace playlist file with modified version
@@ -621,8 +625,6 @@ else:
     iconpng = tk.PhotoImage(file = path_to_dat / "ico/mmc4w-ico.png") # Linux
     window.iconphoto(False, iconpng) 			# Linux
 #confparse.set('display','displaysize',str(window.winfo_screenwidth()) +','+ str(window.winfo_screenheight()) )
-#with open(mmc4wIni, 'w') as SLcnf:
-#    confparse.write(SLcnf)
 updateIni('display','displaysize',str(window.winfo_screenwidth()) +','+ str(window.winfo_screenheight()) )
 window.update()
 
@@ -1070,7 +1072,7 @@ def plupdate():
         pl = ""
         for plv in cpl:
             pl = plv['playlist'] + "," + pl
-        #confparse.read(mmc4wIni)
+        #confparse.read(iniFilename)
         lastpl = confparse.get("serverstats","lastsetpl")
         confparse.set("serverstats","playlists",str(pl))
         if lastpl == '':
@@ -1079,7 +1081,7 @@ def plupdate():
         if firstrun == '1':
             confparse.set('basic','firstrun','0')
             firstrun = '0'
-        with open(mmc4wIni, 'w') as SLcnf:
+        with open(iniFilename, 'w') as SLcnf:
             confparse.write(SLcnf)
     else:
         endWithError("No PlayList Found","The MPD server shows no saved playlist.")
