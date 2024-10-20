@@ -1,0 +1,100 @@
+Don's simple Kitchen music Player - v0.4
+
+>>>> Version 0.? is under active development, so features could be added, 
+        or change without notice
+
+
+KitchenPlayer is operated like a car radio, where user presses a button 
+to start a pre-defined playlist or streaming radio station. 
+
+The display also provides information on what is currently playing through 
+text fields and album artwork.  
+
+
+---------------------------------------------------------------------
+
+KitchenPlayer is intended to run on a dedicated Raspberry Pi (or similar) 
+with sound card touch-screen display. I have a 7" screen at 1024*600 
+resolution, so you will probably have to fiddle with the [display] parameters 
+to get the best fit for your hardware. 
+
+KitchenPlayer runs full-screen so that it can provide sufficiently large 
+buttons for an average user. 
+
+It is assumed that a more technical person will maintain the playlists and 
+configuration file, probably using ssh terminal. 
+
+KitchenPlayer is an interface to MPD, which is assumed to already be running, 
+and mpd.conf already configured. 
+KitchenPlayer.py uses the python-musicpd, TKInter and PIL libraries, which 
+are assumed to already be installed on the RasPi.
+
+
+Configuration .ini file
+=======================
+A windows-style .ini Configuration file is required. Important sections are:
+  [basic] contains rogram location, MPD server
+  [program] contains version and logging details. 'logging' should normally be on, with 'loglevel' set to 'info'
+  [display] contains details of screen size, font and button size
+  [mainwindow] defines the position and size of the main window - not needed if full screen -
+  [searchwin] - not currently used - position of location & size for the pop-up for [Select] function
+  [radio_buttons] details of all the radio-style buttons. Each comprises:
+       name            is used as the key to the related dictionaries
+       row, col        row and column in the display to place the button
+       type            "playlist" for local playlists, or "stream" for 
+                               internet radio station streams
+       button_Text     label to display on the button
+       stream_URL      (opt) URL of the stream, 
+       stream_Art      (opt) URL of artwork image
+    eg radio-italiafm = 9,1,Italia FM,stream,https://andromeda.shoutca.st/tunein/jdiflu00-stream.pls,
+    The first 5 fields are required for all radio buttons; and if 
+    type is "stream" then stream_URL and stream_Art are also required (though art may be empty)
+
+Many MPD commands require a URI, but MPD apears unable to supply the URI 
+for the current song, so I have duplicated settings from the mpd.conf file into the [basic] section
+   music_directory = /mnt/Media/Music
+   playlist_directory = /var/lib/mpd/playlists
+Note: my music is on a shared network drive, hence the non-standard music_directory
+
+
+Playlists and streaming radio stations
+======================================
+MPD makes a distintion between the 'Queue' (list of songs currently 
+loaded im memory) and a 'Playlist' (file stored on physical media).
+
+MPD can load a local playlist file <newPlaylist>.m3u located in
+the playlists directory defined in the MPD mpd.conf file.
+
+Internet radio (and other streaming sources) can be defined in .m3u files 
+containing only the URL of the streaming source.  
+
+MPD also allows the URL to be loaded directly from details conveniently 
+stored in the configuatation .ini file.        
+
+
+Artwork
+=======
+I have allocated aartLabel on the screen for artwork.
+
+
+def artWindow(aartvar):  ## artWindow now returns aart ready for use.
+  Artwork could be:
+    if aartvar == 0: thisimage = programs "ico/mmc4w.png"
+    if aartvar == 1: thisimage = "cover.png", which is set in getaartpic
+
+
+def getaartpic(**currSong):
+    if client.readpicture: copy to cover.png - Locate a picture for the given song 
+		and return a chunk of the image file at offset OFFSET. This is 
+		usually implemented by reading embedded pictures from binary tags 
+		(e.g. ID3v2’s APIC tag).
+    if client.albumart:    copy to cover.png - This is currently implemented by 
+		searching the directory the file resides in for a file called 
+		cover.png, cover.jpg, or cover.webp.
+
+
+-----------------------------------------------------------------------------
+
+Query/remove:
+[mainwindow] defines the position and size of the main window - not needed if full screen -
+	add parameters for number of rows and columns of radio buttone, and artwork
